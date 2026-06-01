@@ -118,7 +118,7 @@
         async function fetchAndParseCSV() {
             try {
                 // Uses the browser's native Fetch API to grab the local 'locations.csv' asset file
-                const response = await fetch('/Users/coenraad/Desktop/locations.csv');
+                const response = await fetch('locations.csv');
                 
                 // Extracts the completely raw text characters contained within that file response
                 const rawText = await response.text();
