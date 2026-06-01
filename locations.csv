@@ -1,4 +1,4 @@
-address,label
-"Via Pennella Pergine Valsugana Italy","Our Main Office"
-"Castello di Pergine Italy","Historic Castle Hotel"
-"Lago di Caldonazzo Italy","Beautiful Local Lake"
+address,label, min_date, max_date
+"Via Pennella Pergine Valsugana Italy","Our Main Office", "01-01-2026", "01-01-2027"
+"Castello di Pergine Italy","Historic Castle Hotel", "01-01-2026", "01-01-2027"
+"Lago di Caldonazzo Italy","Beautiful Local Lake", "01-01-2026", "01-01-2027"
