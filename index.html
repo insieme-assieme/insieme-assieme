@@ -210,7 +210,7 @@
                     const rowMaxDate   = columns[3].replace(/^"|"$/g, '').trim(); 
                     
                     // Apply the optimized overlap logic
-                    if (rowMinDate <= maxDateValue && rowMaxDate >= minDateValue) {
+                    if (rowMinDate >= minDateValue) {
                         filteredLocations.push({
                             address: cleanAddress,
                             label: cleanLabel,
