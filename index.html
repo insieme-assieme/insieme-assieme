@@ -155,7 +155,7 @@
                     // Check if the current row's date fits between the selected range
                     // Because they are in YYYY-MM-DD format, strings can be compared directly (e.g. "2026-05" > "2026-01")
                     // -- maxDate >= minDate (should not have ended, 
-                    if ((maxDate >= minDateValue & minDate < minDateValue) || (minDate >= minDateValue & maxDate <= maxDateValue)) {
+                    if ((maxDate >= minDateValue && minDate < minDateValue) || (minDate >= minDateValue && maxDate <= maxDateValue)) {
                         filteredLocations.push({
                             address: cleanAddress,
                             label: cleanLabel,
