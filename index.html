@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSM Map - Fully Documented Native CSV</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        /* Target the map container div by its unique ID */
+        #map {
+            height: 600px;      /* Map canvas must have a defined height or it will collapse to 0 pixels */
+            width: 100%;        /* Allows the map canvas to stretch completely across the page */
+            border-radius: 8px; /* Smooths the sharp corners of the map bounding box */
+        }
+        /* Page styling for clean typography and edge padding */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Map Locations Loaded via Native JS Fetch</h2>
+    
+    <div id="map"></div>
+
+    <script>
+        // 3. INITIALIZE THE MAP
+        // L.map('map') binds to the <div> with id="map". 
+        // .setView([Lat, Lon], Zoom) targets Pergine Valsugana at an optimal neighborhood view level (13)
+        const map = L.map('map').setView([46.0620, 11.2407], 13);
+
+        // 4. CHOOSE MAP IMAGERY LAYER
+        // Downloads the actual street grid and map artwork tiles from OpenStreetMap's servers
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, // Prevents zooming past the resolution limit of OSM's imagery tiles
+            attribution: '© OpenStreetMap contributors' // Mandatory copyright notice shown in the lower corner
+        }).addTo(map); // Pastes these visual tiles onto our background map instance
+
+        // 5. GEOCODING FUNCTION (TEXT ADDRESS -> COORDINATES)
+        async function geocodeAddress(address) {
+            // encodeURIComponent converts special characters and spaces into internet-safe URL syntax
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+            
+            try {
+                // Sends an HTTP request out to the Nominatim API and waits for a network response
+                const response = await fetch(url, {
+                    headers: { 
+                        // Identifies your application traffic to OSM. Change this to your email to prevent blocking.
+                        'User-Agent': 'YourAppNameOrEmail@domain.com' 
+                    }
+                });
+                
+                // Unpacks the raw text stream coming back from the server and formats it into a JSON array
+                const data = await response.json();
+                
+                // Evaluates if the API search query successfully matched a physical map location
+                if (data && data.length > 0) {
+                    // Pull the first matching index out of the array and grab its numeric Lat/Lon coordinates
+                    return {
+                        lat: parseFloat(data[0].lat),
+                        lon: parseFloat(data[0].lon)
+                    };
+                }
+            } catch (error) {
+                // Catches network dropout errors or server downtime gracefully without freezing the map page
+                console.error(`Error geocoding "${address}":`, error);
+            }
+            return null; // Return null if the text string couldn't be evaluated to coordinates
+        }
+
+        // 6. MAP PIN PLOTTING LOOP
+        async function plotAddresses(locationsArray) {
+            const markers = []; // Empty temporary array to track our successfully generated pin markers
+
+            // Iterates cleanly through every formatted location object in our structured list
+            for (const location of locationsArray) {
+                // Protection layer: skips over lines that are missing a valid address string entirely
+                if (!location.address) continue;
+
+                // Send the text string to our geocoding search function and wait for the numeric result
+                const coords = await geocodeAddress(location.address);
+                
+                // If coordinates were successfully returned...
+                if (coords) {
+                    // Create an explicit coordinate marker pin, apply it to the map surface,
+                    // and attach a text popup containing our custom string label
+                    const marker = L.marker([coords.lat, coords.lon])
+                        .addTo(map)
+                        .bindPopup(`<b>${location.label}</b>`); 
+                    
+                    markers.push(marker); // Keep tabs on this map marker object inside our tracking array
+                }
+                
+                // ANTI-BAN THROTTLE: Forces the script to pause completely for 1000 milliseconds (1 second)
+                // before querying the next address. This satisfies Nominatim's free usage policy.
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            // 7. DYNAMIC MAP FRAMING
+            // If the loop generated at least one working map marker...
+            if (markers.length > 0) {
+                // Bundles all individual separate markers together into a single layer entity
+                const group = new L.featureGroup(markers);
+                
+                // Instructs the camera view to instantly fit all plotted pins inside the user's screen space.
+                // .pad(0.1) creates a clean, 10% safety cushion boundary around the outermost pins.
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // 8. NATIVE CSV DOWNLOAD AND HAND-PARSER
+        async function fetchAndParseCSV() {
+            try {
+                // Uses the browser's native Fetch API to grab the local 'locations.csv' asset file
+                const response = await fetch('/Users/coenraad/Desktop/locations.csv');
+                
+                // Extracts the completely raw text characters contained within that file response
+                const rawText = await response.text();
+
+                // Splits the single massive block of file text into an array of lines wherever a line break (\n) occurs
+                const lines = rawText.split('\n');
+
+                const parsedLocations = []; // Prepares an empty array to collect our custom built row objects
+
+                // Loop over every line string. We start our loop index counter at 1 (i = 1) to skip the header row.
+                for (let i = 1; i < lines.length; i++) {
+                    // .trim() safely deletes accidental white spaces or carriage returns (\r) lingering on the line ends
+                    const currentLine = lines[i].trim();
+                    
+                    // Skips the logic cycle if this row is completely blank (common at the footer of documents)
+                    if (currentLine === '') continue;
+
+                    // Chop up the text data string into a standard array using commas as the split points
+                    const columns = currentLine.split(',');
+
+                    // Clean the text values. The regex /^"|"$/g finds and deletes enclosing double quotation marks.
+                    // .trim() handles trailing or leading spaces on the inner values.
+                    const cleanAddress = columns[0].replace(/^"|"$/g, '').trim();
+                    // Fall back to a generic 'Location' string label if column number 2 is left entirely empty
+                    const cleanLabel = columns[1] ? columns[1].replace(/^"|"$/g, '').trim() : 'Location';
+
+                    // Reassemble those text values into an explicit data object that matches our app design
+                    parsedLocations.push({
+                        address: cleanAddress,
+                        label: cleanLabel
+                    });
+                }
+
+                // Output the parsed results object safely into the developer inspect console tool
+                console.log("Natively Parsed CSV Data:", parsedLocations);
+
+                // Hand the clean array over to the map rendering function to kick off the geocoding
+                plotAddresses(parsedLocations);
+
+            } catch (error) {
+                // Disables page breaking and logs error if files are missing or blocked by browser CORS security
+                console.error("Error reading or parsing the local CSV file:", error);
+            }
+        }
+
+        // 9. APP LAUNCH ENGINE
+        // Triggers the native CSV parser chain the moment the browser finishes evaluating this script
+        fetchAndParseCSV();
+    </script>
+</body>
+</html>
