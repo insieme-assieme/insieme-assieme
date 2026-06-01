@@ -118,10 +118,10 @@
             }
 
             // Zoom map to frame the newly filtered points
-            if (markers.length > 0) {
-                const group = new L.featureGroup(markers);
-                map.fitBounds(group.getBounds().pad(0.1));
-            }
+            //if (markers.length > 0) {
+            //    const group = new L.featureGroup(markers);
+            //    map.fitBounds(group.getBounds().pad(0.1));
+            //}
         }
 
         // FETCH AND PARSE FUNCTION WITH DATE FILTER LOGIC
@@ -154,7 +154,8 @@
                     // 4. DATE FILTER LOGIC
                     // Check if the current row's date fits between the selected range
                     // Because they are in YYYY-MM-DD format, strings can be compared directly (e.g. "2026-05" > "2026-01")
-                    if (maxDate >= minDateValue || minDate <= maxDateValue) {
+                    // -- maxDate >= minDate (should not have ended, 
+                    if (maxDate >= minDateValue & minDate < minDateValue) || (minDate >= minDateValue & maxDate <= maxDateValue) {
                         filteredLocations.push({
                             address: cleanAddress,
                             label: cleanLabel,
