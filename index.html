@@ -9,41 +9,76 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        body {
+        /* Reset margins and force the page to take up full available height */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
             font-family: Arial, sans-serif;
-            margin: 20px;
+            display: flex;
+            flex-direction: column; /* Stacks header, filter, and map vertically */
         }
-        #map {
-            height: 550px;
-            width: 100%;
-            border-radius: 8px;
+    
+        h2 {
+            margin: 15px 15px 5px 15px;
+            font-size: 1.4rem;
         }
-        /* Style for the filter dashboard box at the top */
+    
+        /* FILTER PANEL: Uses Flexbox to wrap layout items cleanly */
         .filter-panel {
             background: #f4f4f9;
-            padding: 15px;
+            padding: 12px;
+            margin: 10px 15px;
             border-radius: 8px;
-            margin-bottom: 15px;
             display: flex;
-            gap: 15px;
+            flex-wrap: wrap; /* Allows fields to drop to a new line on small screens */
+            gap: 10px;
             align-items: center;
         }
+    
         .filter-panel label {
             font-weight: bold;
+            font-size: 0.9rem;
         }
+    
         .filter-panel input, .filter-panel button {
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            font-size: 0.9rem;
         }
+    
         .filter-panel button {
             background: #007bff;
             color: white;
             cursor: pointer;
             border: none;
+            font-weight: bold;
         }
-        .filter-panel button:hover {
-            background: #0056b3;
+    
+        /* MAP CONTAINER: Automatically expands to fill the remaining screen space */
+        #map {
+            flex-grow: 1; 
+            width: calc(100% - 30px); /* Subtracts side margins */
+            margin: 0 15px 15px 15px;
+            border-radius: 8px;
+            min-height: 300px; /* Prevents the map from getting too squished */
+        }
+    
+        /* 📱 MOBILE RESPONSIVE TWEAKS (Screens smaller than 600px wide) */
+        @media (max-width: 600px) {
+            .filter-panel {
+                /* On phones, organize the inputs into a clean 2x2 grid pattern */
+                display: grid;
+                grid-template-columns: auto 1fr; 
+                gap: 8px;
+            }
+            
+            .filter-panel button {
+                /* Stretch the filter button across the entire width of the panel */
+                grid-column: span 2; 
+                padding: 12px; /* Bigger touch target for fingers */
+            }
         }
     </style>
 </head>
@@ -155,7 +190,7 @@
                     // Check if the current row's date fits between the selected range
                     // Because they are in YYYY-MM-DD format, strings can be compared directly (e.g. "2026-05" > "2026-01")
                     // -- maxDate >= minDate (should not have ended, 
-                    if ((maxDate >= minDateValue && minDate < minDateValue) || (minDate >= minDateValue && maxDate <= maxDateValue)) {
+                    if ((maxDate >= minDateValue && minDate < minDateValue) || (minDate >= minDateValue && minDate <= maxDateValue)) {
                         filteredLocations.push({
                             address: cleanAddress,
                             label: cleanLabel,
