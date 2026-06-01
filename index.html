@@ -109,7 +109,7 @@
                 if (coords) {
                     // Create the marker and add it specifically to our LayerGroup instead of raw map
                     const marker = L.marker([coords.lat, coords.lon])
-                        .bindPopup(`<b>${location.label}</b><br><small>Date: ${location.date}</small>`);
+                        .bindPopup(`<b>${location.label}</b><br><small>Date: ${location.mindate}</small> - ${location.maxdate}</small>`);
                     
                     markerLayerGroup.addLayer(marker);
                     markers.push(marker);
@@ -158,7 +158,8 @@
                         filteredLocations.push({
                             address: cleanAddress,
                             label: cleanLabel,
-                            date: rowDate
+                            mindate: minDate,
+                            maxdate: maxDate
                         });
                     }
                 }
